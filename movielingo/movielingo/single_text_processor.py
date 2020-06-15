@@ -1,5 +1,7 @@
-import numpy as np
+import sys
+sys.path.append("../movielingo/")
 
+import numpy as np
 import nltk
 from nltk import bigrams
 from nltk.corpus import brown
@@ -12,8 +14,6 @@ from nltk.tokenize.punkt import PunktLanguageVars
 from movielingo.text_utils import get_corrected_word
 from movielingo.text_utils import get_pos_tags
 from movielingo.text_utils import tokenize_words
-
-
 
 
 class BulletPointLangVars(PunktLanguageVars):

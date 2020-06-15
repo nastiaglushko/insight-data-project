@@ -1,3 +1,4 @@
+
 from collections import Counter
 
 import numpy as np
@@ -10,8 +11,8 @@ from nltk.probability import FreqDist
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 
+#from spellchecker import SpellChecker
 from spellchecker import SpellChecker
-
 
 LEM = WordNetLemmatizer()
 FREQS_LEMMAS = FreqDist([LEM.lemmatize(w.lower()) 
