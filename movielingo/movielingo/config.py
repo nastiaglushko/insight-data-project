@@ -1,4 +1,11 @@
 from pathlib import Path
 
-raw_data_dir = Path('../../data/raw/INCNALE_SM2.0_PlainText_Transcripts')
+insight_dir = Path.home() / 'Desktop/insight_fellows/insight-project/insight-data-project/'
 
+icnale_dir = insight_dir / 'data/raw/INCNALE_SM2.0_PlainText_Transcripts/'
+gachon_dir = insight_dir / 'data/raw/'
+subtitle_dir = insight_dir / 'data/raw/SubIMDB_All_Individual/subtitles/'
+
+processed_data_dir = insight_dir / 'data/processed/'
+
+model_dir = insight_dir / 'movielingo/movielingo/'
