@@ -1,6 +1,6 @@
 # [Movielingo](http://datainsight.host/)
 
-*Learn languages with movies*
+*Watch and learn!*
 
 ### What is Movielingo
 
@@ -12,11 +12,13 @@ Movielingo uses deep learning to predict the difficulty of movie subtitles for E
 
 ### Using Movielingo
 
+![alt text](./img/movielingo_main.png)
+
 Enter your English proficiency level (Beginner/Intermediate or Upper-Intermediate/Advanced) and the title of the movie you want to watch. The app will analyze the subtitles of this movie, predicting for every group of 5 sentences in it, users at which language level will be able to understand it. Movielingo will then output a recommendation: is this movie too difficult or just right for you? You will also see how much of the text in the movie is likely to be understood at different levels of proficiency.
 
-### How Movielingo works
+![alt text](./img/movielingo_results.png)
 
-![alt text](./img/movielingo_main.png)
+### How Movielingo works
 
  In this section, I will explain how I built Movielingo.
 
@@ -24,7 +26,11 @@ Enter your English proficiency level (Beginner/Intermediate or Upper-Intermediat
 
 * Step 2: [Inferring subtitle difficulty](#inferring-subtitle-difficulty)
 
-* Step 3: [What's next](#whats-next)
+* Step 3: [Building the app](#building-the-app)
+
+I used Flask to build the app lokally and deployed it on AWS using Gunicorn. The plot in the results section is interactive and was implemented using the plotly library.
+
+* Step 4: [What's next](#whats-next)
 
 #### Modelling language proficiency from text characteristics
 
