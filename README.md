@@ -38,13 +38,13 @@ What are the features of text that are difficult for English learners? And which
 
 I analyzed [essays from > 1300 English learners](http://koreanlearnercorpusblog.blogspot.com/p/corpus.html). I cleaned the text and extracted basic NLP features from it using nltk. Then I engineered features of lexical and syntactic complexity: word frequencies, word length, sentence length, as well as metrics of syntactic complexity derived using the Stanford CoreNLP parser.
 
-![alt text](./img/essays.png)
+![alt text](./img/essays.png=300x)
 
 One important characteristic of the essay data is that they were user-entered online, which lead to a low signal-to-noise ratio. I took on a challenge seeing the promise of automatizing "grading" learners' text even if the text was done remotely, allowing learners to use the vocabulary and other resources. What I did not analyze is errors, because the model was later to be used to infer movie subtitle difficulty, and here any possible errors made by native English speakers (actors) are irrelevant.
 
 I started with a simple linear regression, and had to build hypotheses and make decisions along the way, finally arriving at the best model for the data - a neural network classifying texts into lower (beginner and intermediate) vs. higher (upper-intermediate and advanced) English proficiency levels.
 
-![alt text](./img/modelling.png "Movielingo modelling logic")
+![alt text](./img/modelling.png=300x "Movielingo modelling logic")
 
 #### Inferring subtitle difficulty
 
@@ -52,7 +52,7 @@ There is no one-to-one mapping between language production and language comprehe
 
 When assessing movie subtitle difficulty, I downloaded the [SubIMDB subtitle corpus](http://ghpaetzold.github.io/subimdb/). When the user enters a movie title on Movielingo, the app scrapes movie ID from IMDB, finds the correct subtitle file in the database, and splits the subtitles into groups of 5 sentences. For each text group, the model predicts English proficiency level that could have produced that, be it produced by an English learner. The idea behind this is that if the learner could have produced this text themselves, they are likely to understand it as well.
 
-![alt text](./img/subtitles.png)
+![alt text](./img/subtitles.png=300x)
 
 #### What's next
 
