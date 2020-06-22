@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Movielingo: learn English with movies and TV</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- plotly Dash -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link href='https://fonts.googleapis.com/css?family=Dancing+Script:400,300,300italic,400italic,600' rel='stylesheet' type='text/css'>
+    <link href="https://fonts.googleapis.com/css?family=Bitter:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+      html, body {
+      height: 100%;
+      }
+      body, input, select { 
+      padding: 0;
+      margin: 0;
+      outline: none;
+      font-family: Dancing Script;
+      font-size: 20px;
+      color: #eee;
+      text-align: center;
+      }
+      h1, h3 {
+      font-weight: 400;
+      font-size: 28px;
+      font-family: Dancing Script;
+      color: #000000;
+      }
+      h4 {
+      padding: 10px;
+      font-weight: 400;
+      font-size: 32px;
+      font-family: Dancing Script;
+      color: #ffffff;
+      text-align: center;
+      }
+      .graph-container {
+	  display: flex;
+	  flex-wrap: wrap;
+	  width: 100%;
+	  width: 70%;
+	  margin-left: 200px;
+	  }
+      .main-block, .info {
+      display: flex;
+      flex-direction: column;
+      }
+      .main-block {
+      justify-content: center;
+      align-items: center;
+      width: 100%; 
+      min-height: 100%;
+      background: url('../static/IMG_0555.jpeg' ) no-repeat center;
+      background-size: cover;
+      }
+      form {
+      width: 50%; 
+      padding: 25px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ffffff;
+      background: rgba(0, 0, 0, 0.9);
+      }
+      input, select {
+      padding: 5px;
+      margin-bottom: 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #eee;
+      }
+      input::placeholder {
+      color: #eee;
+      }
+      option {
+      background: black; 
+      border: none;
+      }
+      .metod {
+      display: flex; 
+      }
+      input[type=radio] {
+      display: none;
+      }
+      label.radio {
+      position: relative;
+      display: inline-block;
+      margin-right: 20px;
+      text-indent: 32px;
+      cursor: pointer;
+      }
+      label.radio:before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      border: 2px solid #1c87c9;
+      }
+      label.radio:after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 4px;
+      top: 5px;
+      left: 5px;
+      border-bottom: 3px solid #1c87c9;
+      border-left: 3px solid #1c87c9;
+      transform: rotate(-45deg);
+      opacity: 0;
+      }
+      input[type=radio]:checked + label:after {
+      opacity: 1;
+      }
+      button {
+      display: block;
+      width: 200px;
+      padding: 10px;
+      margin: 10px auto 0;
+      border: none;
+      border-radius: 0px; 
+      background: #ffffff; 
+      font-size: 22px;
+      font-weight: 600;
+      color: #000000;
+      }
+      button:hover {
+      background-color: #667d91;
+      color: white;
+      box-shadow: 0 2px 2px 0 rgba(250,250,250,0.24), 0 2px 2px 0 rgba(250,250,250,0.19);
+      }
+      @media (min-width: 568px) {
+      .info {
+      flex-flow: row wrap;
+      justify-content: space-between;
+      }
+      input {
+      width: 46%;
+      }
+      input.fname {
+      width: 100%;
+      }
+      select {
+      width: 48%;
+      }
+      }
+    </style>
+  </head>
+
+  <body class="w3-light-grey">
+
+<!-- Top container -->
+	<div class="w3-bar w3-top w3-black" style="z-index:4">
+	  <button class="w3-bar-item w3-button w3-hover-none w3-hover-text-light-grey" 
+	  onclick="w3_open()"><i class="fa fa-bars"></i>  Menu</button>
+	</div>
+	
+	<!-- Sidebar/menu -->
+	<br>
+	<nav div class="w3-sidebar w3-bar-block w3-border-right" style="display:none" id="mySidebar">
+	<br>
+	  <div class="w3-container">
+	    <h5>Menu</h5>
+	  </div>
+	  <div class="w3-bar-block">
+	    <a href="#" class="w3-bar-item w3-button w3-padding-16" onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
+	    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-home fa-fw"></i>  Main</a>
+	    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-info-circle fa-fw"></i>  About</a>
+	  </div>
+	</nav>
+	
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	
+	<!-- !PAGE CONTENT! -->
+
+    <div class="w3-row" style = "width: 100%">
+    	  <div class="w3-half w3-center w3-border w3-border-white" style="background: rgba(0, 0, 0, 0.9);height:100vh;vertical-align: middle;">
+    		<div class="w3-padding-64 w3-center">
+    			<h4>Movielingo thinks:</h4>
+          <p style="text-align:center;color:white;">"{{movie_title}}" {{result}}!</p>
+      			<img src={{imdb_poster}} alt="Movie Poster" width="250" style="vertical-align:top;margin:50px 50px; border:2px solid white;">
+    		</div>
+    	  </div>
+      	  <div class="w3-half w3-center w3-border w3-border-white" style="background: rgba(0, 0, 0, 0.9); height:100vh;width:50%;vertical-align: middle;">
+			<div class="w3-padding-64 w3-center">
+        		<h4>Subtitle difficulty across "{{movie_title}}"</h4>
+        		<p style="text-align:center;color:white;">A2 = beginner | B1 = intermediate | B2 = upper-intermediate | C1 = advanced</p>
+        		<div class="graph-container">
+              <script style="align:center;margin:50px 50px;">
+                var graphs = {{plot | safe}}
+              </script>
+        		</div>
+      		</div>
+      	  </div>
+    </div>
+    <script>
+    // Get the Sidebar
+    var mySidebar = document.getElementById("mySidebar");
+    
+    // Get the DIV with overlay effect
+    var overlayBg = document.getElementById("myOverlay");
+    
+    // Toggle between showing and hiding the sidebar, and add overlay effect
+    function w3_open() {
+      if (mySidebar.style.display === 'block') {
+        mySidebar.style.display = 'none';
+        overlayBg.style.display = "none";
+      } else {
+        mySidebar.style.display = 'block';
+        overlayBg.style.display = "block";
+      }
+    }
+    
+    // Close the sidebar with the close button
+    function w3_close() {
+      mySidebar.style.display = "none";
+      overlayBg.style.display = "none";
+    }
+</script>
+  </body>
+</html>
