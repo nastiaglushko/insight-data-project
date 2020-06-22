@@ -148,7 +148,7 @@ def get_result(results, l2_level):
             result = 'is just right for you!'
     return result
 
-def recommend_movies(movie_title_from_user, movie_db):
+def recommend_movies(movie_title_from_user, movie_db, preferred_genre):
     ''' Get movie recommendations based on inputted movie
     :param: movie title (str) for the movie user enjoyed
     :returns: movie titles (list), links to movie posters (list), genre (list)
@@ -168,11 +168,20 @@ def recommend_movies(movie_title_from_user, movie_db):
         titles = list(movie_db.iloc[neigh_ind]['title'].values)
         ids = movie_db.iloc[neigh_ind]['id'].values
         genres = list(movie_db.iloc[neigh_ind]['genre'].values)
+        selected_by_genre = [i for i, genre in enumerate(genres) if preferred_genre in genre]
         posters = []
         for ID in ids:
             html_soup = get_imdb_page_for_movie(ID)
             movie_poster_link = get_link_to_movie_poster(html_soup)
             posters.append(movie_poster_link)
+        if len(selected_by_genre) > 1:
+            titles = [titles[i] for i in selected_by_genre]
+            posters = [posters[i] for i in selected_by_genre]
+            genres = [genres[i] for i in selected_by_genre]
+        else:
+            titles = [titles[i] for i in selected_by_genre] + titles
+            posters = [posters[i] for i in selected_by_genre] + posters
+            genres = [genres[i] for i in selected_by_genre] + genres
         posters.append(orig_movie_poster_link)
         titles.append(movie_title_from_user)
     else:
