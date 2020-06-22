@@ -23,8 +23,8 @@ def my_form():
 def dynamic_page():
     if request.method == 'POST':
         movie_title = str(request.form['movie_title'])
-        # l2_level = str(request.form['l2_level']) # can change this to genre
-        titles, posters, genres = recommend_movies(movie_title, movie_db)
+        preferred_genre = str(request.form['desired_genre']) # can change this to genre
+        titles, posters, genres = recommend_movies(movie_title, movie_db, preferred_genre)
         return render_template('final_recom.html', original_movie=titles[-1], imdb_poster = posters[-1],
         											movie_title1=titles[0], imdb_poster1 = posters[0], genres1 = genres[0],
         											movie_title2=titles[1], imdb_poster2 = posters[1], genres2 = genres[1])

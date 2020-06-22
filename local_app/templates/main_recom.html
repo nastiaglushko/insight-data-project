@@ -167,12 +167,19 @@
   <h1>Movielingo</h1>
   <form action="." method = "POST">
     <div class="info">
-      <select class="form-control" id="l2_level" name = "l2_level" required>
-        <option value="proficiency" disabled selected>Your English level:</option>
-        <option value="BegInter">Beginner/Intermediate</option>
-        <option value="UpperInterAdv">Upper-intermediate/Advanced</option>
+      <select class="form-control" id="desired_genre" name = "desired_genre" required>
+        <option value="desired_genre" disabled selected>I want to watch a(-n)...</option>
+        <option value="Any">Movie (any genre)</option>
+        <option value="Family">Family movie</option>
+        <option value="Adventure">Adventure movie</option>
+        <option value="Comedy">Comedy</option>
+        <option value="Animation">Animated movie</option>
+        <option value="Action">Action movie</option>
+        <option value="Fantasy">Fantasy movie</option>
+        <option value="Romance">Romance movie</option>
+        <option value="Drama">Drama</option>
       </select>
-      <input class="form-control" type="text" id="movie_title" name = "movie_title" placeholder="Enter movie or TV-show title..." required>
+      <input class="form-control" type="text" id="movie_title" name = "movie_title" placeholder="Type in a movie you enjoyed..." required>
     </div>
     <button href="/" class="button">Go!</button>
   </form>
