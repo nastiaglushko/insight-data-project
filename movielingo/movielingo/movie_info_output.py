@@ -1,6 +1,6 @@
 from movielingo.config import subtitle_dir, model_dir, processed_data_dir
-from movielingo.batch_text_processing_multi import create_df_from_subtitles, engineer_features
 from movielingo.modelling import FeatureRecorder, FeatureSelector, ClfSwitcher
+from movielingo.movie import Movie
 from bs4 import BeautifulSoup
 import plotly.graph_objects as go
 import plotly.express as px
@@ -15,36 +15,8 @@ import numpy as np
 #IMDB = pd.read_csv(processed_data_dir / 'imdb_title_and_id_matches.csv', dtype = {'id': str})
 IMDB = pd.read_csv(processed_data_dir /'movie_details_db.csv', dtype = {'id': str})
 
-def get_google_search_results(movie): # googled blocked my IP, switching to use get_imdb_id_from_db
-    query = movie + ' site:imdb.com'
-    g_clean = []  # this is the list we store the search results
-    url = 'https://www.google.com/search?client=ubuntu&channel=fs&q={}&ie=utf-8&oe=utf-8'.format(query)  # this is the actual query we are going to scrape
-
-    url_content = requests.get(url)
-    soup = BeautifulSoup(url_content.text, features="html5lib")
-    a = soup.find_all('a')  # a is a list
-    a[0].get('href')
-    for i in a:
-       k = i.get('href')
-       try:
-           m = re.search("(?P<url>https?://www.imdb.com/title/tt[^\s]+)", k).group()
-           rul = m.split('&')[0]
-           g_clean.append(rul)
-       except:
-           pass
-    return g_clean
-
-def get_imdb_id(movie):
-    g_clean = get_google_search_results(movie)
-    for result in g_clean:
-        try:
-            imdb_id = result.split('tt')[-1].strip('/')
-            if imdb_id:
-                return imdb_id
-        except:
-            print('not the link')
-
 def toeic2cefr(x):
+    ''' Transform TOEIC scores into CEFR language proficiency scores '''
     if x < 120/1000:
         return 'Low'
     elif x < 255/1000:
@@ -57,7 +29,16 @@ def toeic2cefr(x):
         return 'B2+'
         
 def show_difficulty(movie_title, subtitle_dir, model_dir, model = 'regression'):
-    imdb_id = get_imdb_id_from_db(movie_title)
+    ''' [Used for version 1 of Movielingo app; now out of use]
+    Predict a language proficiency label for every 5 sentences in a movie to infer
+    text difficulty for language learners
+    :param: movie_title (title of the movie, str), subtitle_dir (directory with subtitle
+    database, model_dir (directory with movielingo_model.sav - pickled model), model 
+    (classifier or regression)
+    :returns: results (list of proficiency labels with corresponding ratio of text:
+    e.g., [["A1", 56], ["B2", 44]]), URL for movie poster, plotly pie chart based on results
+    ''' 
+    imdb_id = get_imdb_id(movie_title, IMDB)
     html_soup = get_imdb_page_for_movie(imdb_id)
     movie_poster_link = get_link_to_movie_poster(html_soup)
     movie_title_correct = get_movie_title(html_soup)
@@ -83,19 +64,12 @@ def show_difficulty(movie_title, subtitle_dir, model_dir, model = 'regression'):
     plot = plot_subtitle_difficulty(results, movie_title_correct)
     return results, movie_poster_link, plot
     
-def get_imdb_page_for_movie(imdb_id): # for compiling a list of movies in the subtitle database
-    url = 'https://www.imdb.com/title/tt' + imdb_id + '/'
-    response = requests.get(url)
-    html_soup = BeautifulSoup(response.text, 'html.parser')
-    return html_soup
-
-def get_movie_title(imdb_page_html):
-    return imdb_page_html.title.text
-
-def get_link_to_movie_poster(imdb_page_html):
-    return imdb_page_html.find(class_='poster').img['src']
-    
 def plot_subtitle_difficulty(difficulty_results, movie_title):
+    ''' [Used for version 1 of Movielingo app; now out of use]
+    :param: list of proficiency labels with corresponding ratio of text:
+    e.g., [["A1", 56], ["B2", 44]], movie_title (str)
+    :returns: plotly pie chart in html format
+    '''
     labels = []
     vals = []
     for i in range(len(difficulty_results)):
@@ -113,15 +87,14 @@ def plot_subtitle_difficulty(difficulty_results, movie_title):
     div = fig.to_html(full_html = True)
     return div
 
-def get_imdb_id_from_db(movie_title):
-    try:
-        IMDB_one_movie = IMDB[IMDB.title.str.lower() == movie_title.lower()]
-        imdb_id = IMDB_one_movie.id.values[0]
-    except:
-        imdb_id = 'not_found'
-    return str(imdb_id)
-
 def get_result(results, l2_level):
+    ''' [Used for version 1 of Movielingo app; now out of use]
+    Based on language complexity composite score + heuristics, produces
+    actionable feedback for language learner re: whether the movie is good for them
+    :param: list of proficiency labels with corresponding ratio of text:
+    e.g., [["A1", 56], ["B2", 44]], language proficiency level ('BegInter' / 'UpperInterAdv')
+    :results: " (movie X) is just right for you!" etc.
+    '''
     labels = []
     vals = []
     for i in range(len(results)):
@@ -148,45 +121,40 @@ def get_result(results, l2_level):
             result = 'is just right for you!'
     return result
 
-def recommend_movies(movie_title_from_user, movie_db, preferred_genre):
+def recommend_movies(movie_title_from_user, movie_db, pref_genre):
     ''' Get movie recommendations based on inputted movie
     :param: movie title (str) for the movie user enjoyed
     :returns: movie titles (list), links to movie posters (list), genre (list)
     '''
-    imdb_id = get_imdb_id_from_db(movie_title_from_user)
-    if imdb_id != 'not_found':
-        html_soup = get_imdb_page_for_movie(imdb_id)
-        orig_movie_poster_link = get_link_to_movie_poster(html_soup)
-        df = create_df_from_subtitles(imdb_id, subtitle_dir)
-        df['title'] = movie_title_from_user
-        df_summary = df.groupby('title').mean()
+    user_movie = Movie(title = movie_title_from_user)
+    user_movie.get_imdb_id(IMDB)
+    recommend1 = Movie()
+    recommend2 = Movie()
+    if user_movie.imdb_id != 'not_found':
+        user_movie.get_imdb_page_for_movie()
+        user_movie.get_link_to_movie_poster()
+        user_movie.create_subtitle_features_df(subtitle_dir)
+        X = user_movie.subtitle_features.mean(axis = 0).values.reshape(1, -1)
         model_name = model_dir / '5_neighbours_model.sav'
         neigh = pickle.load(open(model_name, 'rb'))
-        X = df_summary[df_summary.index == movie_title_from_user].values
         _, neigh_ind = neigh.kneighbors(X)
-        neigh_ind = neigh_ind[0]
-        titles = list(movie_db.iloc[neigh_ind]['title'].values)
-        ids = movie_db.iloc[neigh_ind]['id'].values
+        neigh_ind = neigh_ind.flatten()
         genres = list(movie_db.iloc[neigh_ind]['genre'].values)
-        selected_by_genre = [i for i, genre in enumerate(genres) if preferred_genre in genre]
-        posters = []
-        for ID in ids:
-            html_soup = get_imdb_page_for_movie(ID)
-            movie_poster_link = get_link_to_movie_poster(html_soup)
-            posters.append(movie_poster_link)
-        if len(selected_by_genre) > 1:
-            titles = [titles[i] for i in selected_by_genre]
-            posters = [posters[i] for i in selected_by_genre]
-            genres = [genres[i] for i in selected_by_genre]
+        pref_genre_inds = neigh_ind[[i for i, genre in enumerate(genres) if pref_genre in genre]]
+        n_right_genre = len(pref_genre_inds)
+        if n_right_genre > 0:
+            features_rec1 = movie_db.iloc[pref_genre_inds[0]]
+            recommend1.update_from_db(features_rec1)
+            if n_right_genre > 1:
+                features_rec2 = movie_db.iloc[pref_genre_inds[1]]
+                recommend2.update_from_db(features_rec2)
+            else:
+                features_rec2 = movie_db.iloc[neigh_ind[0]]
+                recommend2.update_from_db(features_rec2)
         else:
-            titles = [titles[i] for i in selected_by_genre] + titles
-            posters = [posters[i] for i in selected_by_genre] + posters
-            genres = [genres[i] for i in selected_by_genre] + genres
-        posters.append(orig_movie_poster_link)
-        titles.append(movie_title_from_user)
-    else:
-        titles = ["Not found", "Not found", "Not found", "Not found", "Not found", "Sorry, Movielingo doesn't have subtitles for " + movie_title_from_user]
-        poster_template = 'https://s.studiobinder.com/wp-content/uploads/2017/12/Movie-Poster-Template-Light-With-Image.jpg?x81279'
-        posters = [poster_template,poster_template,poster_template,poster_template,poster_template,poster_template]
-        genres = ['', '', '']
-    return titles, posters, genres
+            features_rec1 = movie_db.iloc[neigh_ind[0]]
+            recommend1.update_from_db(features_rec1)
+            features_rec2 = movie_db.iloc[neigh_ind[1]]
+            recommend2.update_from_db(features_rec2)
+
+    return user_movie, recommend1, recommend2
