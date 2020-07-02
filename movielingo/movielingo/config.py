@@ -1,6 +1,7 @@
 from pathlib import Path
 
 insight_dir = Path.home() / 'Desktop/insight_fellows/insight-project/insight-data-project/'
+#insight_dir = Path.home() # for ubuntu machine
 
 icnale_dir = insight_dir / 'data/raw/INCNALE_SM2.0_PlainText_Transcripts/'
 gachon_dir = insight_dir / 'data/raw/'

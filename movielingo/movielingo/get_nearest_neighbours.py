@@ -9,10 +9,10 @@ import tqdm
 from requests import get
 from bs4 import BeautifulSoup
 
-from movielingo.batch_text_processing_multi import create_df_from_subtitles
-from movielingo.config import subtitle_dir, model_dir
+from movielingo.movie import Movie
+from movielingo.config import subtitle_dir, model_dir, processed_data_dir
 
-from sklearn.neighbours import NearestNeighbours
+from sklearn.neighbors import NearestNeighbors
 import pickle
 
 
@@ -102,13 +102,17 @@ def extract_features_from_subtitles(imdb_ids, titles):
 	:returns: pandas df (feature extracted for every 5 sentences), df_summary (one line per movie)
 	'''
 	for movie in range(len(imdb_ids)):
-	    df_movie = create_df_from_subtitles(imdb_ids[movie], subtitle_dir)
-	    df_movie['title'] = titles[movie]
-	    if movie == 0:
-	    	df = df_movie
-	    else:
-	    	df = df.append(df_movie, ignore_index = True)
+		one_movie = Movie()
+		one_movie.imdb_id = imdb_ids[movie]
+		one_movie.create_subtitle_features_df(subtitle_dir)
+		df_movie = one_movie.subtitle_features
+		df_movie['title'] = titles[movie]
+		if movie == 0:
+			df = df_movie
+		else:
+			df = df.append(df_movie, ignore_index = True)
 	df_summary = df.groupby('title').mean()
+	df_summary.to_csv(processed_data_dir / 'movie_features.csv', index=False)
 	return df, df_summary
 
 def save_NN_fits(samples, directory):
@@ -116,11 +120,11 @@ def save_NN_fits(samples, directory):
 	:param: samples (numpy array)
 	:returns: None (writes files to directory)
 	'''
-	for n in range(10):
+	for n in range(1,10):
 		neigh = NearestNeighbors(n_neighbors=n, metric="cosine")
 		neigh.fit(X)
-		filename = model_dir / str(n) + '_neighbours_model.sav'
-		pickle.dump(neigh, open(filename, 'wb'))
+		model_name = str(n) + '_neighbours_model.sav'
+		pickle.dump(neigh, open(model_name, 'wb'))
 
 if __name__ == '__main__':
 	response = get('https://www.imdb.com/chart/top-english-movies')

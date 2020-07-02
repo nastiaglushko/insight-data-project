@@ -34,14 +34,14 @@ import tqdm
 from multiprocessing import Pool
 
 class BulletPointLangVars(PunktLanguageVars):
-    sent_end_chars = ('.', '?', '!', '•', '\n')
+    sent_end_chars = ('.', '?', '!', '•', '...')
 
 _TEXTS_TO_EXCLUDE = [3517] # text only has one letter in it
 SENT_TOKENIZER = PunktSentenceTokenizer(lang_vars = BulletPointLangVars())
 
 def process_one_text(arguments):
-    raw_text, toeic_score_str, student_id_str = arguments
-    rt = SingleTextProcessor(raw_text, toeic_score_str , student_id_str)
+    raw_text, toeic_score_str, student_id_str, mode = arguments
+    rt = SingleTextProcessor(raw_text, toeic_score_str , student_id_str, mode)
     rt.process_self()
     l2_dict = rt.to_dict()
     features = engineer_features(l2_dict)
@@ -67,7 +67,7 @@ def create_df_from_texts(filename):
 
     features_list = []
     for counter, (raw_text, toeic_score, text_id) in enumerate(tqdm.tqdm(zip_loc)):
-        arguments = raw_text,  str(toeic_score),  str(text_id)
+        arguments = raw_text, str(toeic_score), str(text_id), 'learners'
         if counter not in _TEXTS_TO_EXCLUDE:
             features_list.append(pool.apply_async(process_one_text, (arguments,)))
     
@@ -111,40 +111,7 @@ def engineer_features(l2_dict):
     features['n_unique_modals'] = get_n_unique_modals(l2_dict)
     features['n_wh'] = get_n_wh(l2_dict)
 
-    return pd.DataFrame(features, index=[0])
-
-def create_df_from_subtitles(imdb_id, directory):
-    """
-    Extract features (see engineer_features()) from subtitles for specific movie
-
-    :param: imdb_id for movie, subtitle corpus directory
-    :returns: Pandas dataframe with shape (n_words, n_features)
-    """
-    features_list = []
-    pool = Pool(processes=4)
-    features_df = pd.DataFrame()
-    time_window = 1
-    files = os.listdir(directory)
-    list_of_text_files = []
-    for file in files:
-        if re.search(imdb_id, file):
-            list_of_text_files.append(file)
-    
-    for file in list_of_text_files:
-        filename = directory / file
-        with open(filename, 'r') as subtitles:
-            texts = subtitles.read()
-        sents = SENT_TOKENIZER.tokenize(texts)
-        for itext in range(floor(len(sents)/5)):
-            text_window = sents[itext*5:(itext+1)*5]
-            text_window_raw = TreebankWordDetokenizer().detokenize(text_window)
-            arguments = text_window_raw,  str('_'),  str(time_window)
-            features_list.append(pool.apply_async(process_one_text, (arguments,)))
-    for features in tqdm.tqdm(features_list):
-        features_df = features_df.append(features.get(), ignore_index=True)
-        
-    return features_df   
-    
+    return pd.DataFrame(features, index=[0])    
 
 if __name__ == "__main__":
 

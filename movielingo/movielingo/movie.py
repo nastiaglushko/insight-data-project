@@ -1,16 +1,31 @@
-import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-from movielingo.batch_text_processing_multi import process_one_text
-from nltk.tokenize.treebank import TreebankWordDetokenizer
-import re
-import tqdm
 import os
-from multiprocessing import Pool
+import pandas as pd
+import re
+import requests
+import tqdm
+
+from collections import Counter
 from movielingo.config import subtitle_dir, processed_data_dir
+from movielingo.batch_text_processing_multi import process_one_text
+from multiprocessing import Pool
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktLanguageVars
+from nltk.tokenize.treebank import TreebankWordDetokenizer
 
+def toeic2cefr(x):
+    ''' Transform TOEIC scores into CEFR language proficiency scores '''
+    if x < 120/1000:
+        return 'Low'
+    elif x < 255/1000:
+        return 'A1'
+    elif x < 550/1000:
+        return 'A2'
+    elif x < 785/1000:
+        return 'B1'
+    else:
+        return 'B2+'
+        
 class BulletPointLangVars(PunktLanguageVars):
     sent_end_chars = ('.', '?', '!', '•', '...')
 
@@ -21,11 +36,14 @@ IMDB = pd.read_csv(processed_data_dir /'movie_details_db.csv', dtype = {'id': st
 class Movie():
     ''' A movie in the Movielingo app
 
-    Main attributes:
+    Attributes:
     - title (str)
     - IMDB ID (str)
     - link to movie poster (str)
     - subtitle features (pandas df with NLP features)
+    - subtitle difficulty distribution (list)
+    - IMDB page (BeautifulSoup)
+    - google search results for movie (imdb href)
 
     '''
 
@@ -36,6 +54,7 @@ class Movie():
         self.genre = genre
         self.imdb_id = None
         self.subtitle_features = None
+        self.difficulty = []
         self.html_soup = None
         self.g_clean = [] # imdb link resulted from google searching the movie title
 
@@ -126,17 +145,43 @@ class Movie():
         self.subtitle_features = features_df
 
     def update_from_db(self, features_db_rec):
-
+        ''' Update recommendation characteristics
+        :param: features for the recommendation (series)
+        :returns: updated Movie class with title, genre, and movie poster
+        '''
         self.imdb_id = features_db_rec.id
         self.get_imdb_page_for_movie()
         self.title = features_db_rec.title
         self.genre = features_db_rec.genre
         self.get_link_to_movie_poster()
 
+    def show_difficulty(subtitle_dir, model_dir, model = 'regression'):
+        ''' Predict a language proficiency label for every 5 sentences in a movie to infer
+        text difficulty for language learners
+        :param: movie_title (title of the movie, str), subtitle_dir (directory with subtitle
+        database, model_dir (directory with movielingo_model.sav - pickled model), model 
+        (classifier or regression)
+        :returns: results (list of proficiency labels with corresponding ratio of text:
+        e.g., [["A1", 56], ["B2", 44]]), URL for movie poster, plotly pie chart based on results
+        ''' 
+        loaded_model_name = model_dir / 'movielingo_model.sav'
+        loaded_model = pickle.load(open(loaded_model_name, 'rb'))
+        text_preds = []
+        for text_id in self.subtitle_features.text_id.unique():
+            text_slice = self.subtitle_features[self.subtitle_features.text_id == text_id]
+            text_slice = text_slice.drop(columns = ['text_id','L2_proficiency']).reset_index(drop=True)
+            text_pred = loaded_model.predict(text_slice)
+            text_preds.append(text_pred)
+        if model == 'regression':
+            prof_labels = [toeic2cefr(float(x)) for x in text_preds[0].tolist()]
+        else:
+            prof_labels = text_preds
+        levels = Counter(prof_labels).keys()
+        classified_as = list(Counter(prof_labels).values())
+        n_windows = sum(Counter(prof_labels).values())
+        self.difficulty = []
+        for level, label_count in zip(levels, classified_as):
+            self.difficulty.append([level, round(100*label_count/n_windows,2)])
+
 if __name__ == '__main__':
     movie = Movie('Casablanca')
-    movie.get_imdb_id(IMDB)
-    movie.get_imdb_page_for_movie()
-    movie.get_link_to_movie_poster()
-    movie.create_subtitle_features_df(subtitle_dir)
-    movie.update_from_db(IMDB)

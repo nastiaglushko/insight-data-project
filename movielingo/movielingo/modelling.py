@@ -1,18 +1,20 @@
 import numpy as np
 
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LinearRegression
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
+from sklearn.base import MetaEstimatorMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_selection import SelectFromModel, RFE
-from sklearn.linear_model import LassoCV, LassoLarsCV, LassoLarsIC
-from sklearn.base import BaseEstimator, MetaEstimatorMixin
-from sklearn.feature_selection import RFE
-from sklearn.base import BaseEstimator
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LassoCV
+from sklearn.linear_model import LassoLarsCV
+from sklearn.linear_model import LassoLarsIC
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import PolynomialFeatures
 
 class FeatureRecorder(BaseEstimator, TransformerMixin):
 
@@ -83,9 +85,9 @@ def write_pipeline_scores(scores, filename):
     file = open(filename, 'a')
     scores_str = [str(score) for score in scores]
     file.write('All scores:\n' + str(', '.join(scores_str)) + '\n')
-    file.write('Mean:' + str(scores.mean()))
-    file.write('Median:' + str(np.median(scores)))
-    file.write('SD:' + str(scores.std()))
+    file.write('Mean:' + str(scores.mean()) + '\n')
+    file.write('Median:' + str(np.median(scores)) + '\n')
+    file.write('SD:' + str(scores.std()) + '\n')
     file.close()
 
 def write_best_grid_search_score(grid_search_results, filename):
