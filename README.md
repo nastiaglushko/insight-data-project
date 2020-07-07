@@ -6,7 +6,7 @@
 
 Communication abilities are key in our increasingly globalized world. Speaking a foreign language is often a key to success, especially if this language is English.
 
-If you want to learn a language, you may hit a number of barriers: language classes are expensive and a big time committment, but it's also much more engaging than trying to learn a language all by yourself. Seeking an engaging and affordable learning experience, we often resort to watching movies and TV-shows in the language we want to learn. Selecting the movie in this case though can take hours of indecision.
+If you want to learn a language, you may hit a number of barriers: language classes are expensive and a big time commitment, but it's also much more engaging than trying to learn a language all by yourself. Seeking an engaging and affordable learning experience, we often resort to watching movies and TV-shows in the language we want to learn. Selecting the movie in this case though can take hours of indecision.
 
 Movielingo uses deep learning and a recommendation algorithm to assess language difficulty of movie subtitles and based on this assessment, recommend movies for English language learners.
 
@@ -48,7 +48,7 @@ I started with a simple linear regression, and had to build hypotheses and make 
 
 ![alt text](./img/modelling.png "Movielingo modelling logic")
 
-There is no one-to-one mapping between language production and language comprehension, but they are not independent of one another. With the data available, our best bet for approximating subtitle difficutly is to rely on the features of learners' essays that are predictive of their language proficiency. Whether or not these approximations will be helpful needs validation (see "What's next" below).
+There is no one-to-one mapping between language production and language comprehension, but they are not independent of one another. With the data available, our best bet for approximating subtitle difficulty is to rely on the features of learners' essays that are predictive of their language proficiency. Whether or not these approximations will be helpful needs validation (see "What's next" below).
 
 #### Building a recommender based on selected features
 
@@ -58,7 +58,7 @@ When assessing movie subtitle difficulty, I downloaded the [SubIMDB subtitle cor
 
 #### Deploying the app
 
-I used Flask to build the app lokally and deployed it on AWS with Gunicorn and Nginx. Check it out: http://datainsight.host/!
+I used Flask to build the app locally and deployed it on AWS with Gunicorn and Nginx. Check it out: http://datainsight.host/!
 
 #### What's next
 
