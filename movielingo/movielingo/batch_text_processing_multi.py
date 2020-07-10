@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 sys.path.append("../../movielingo/")
 
+from movielingo.config import subtitle_dir, processed_data_dir
 from movielingo.single_text_processor import SingleTextProcessor
 
 from movielingo.text_utils import get_n_wh
@@ -32,6 +33,9 @@ from nltk.tokenize.treebank import TreebankWordDetokenizer
 import tqdm
 
 from multiprocessing import Pool
+
+KEYS = ['mls', 'mlt', 'mlc', 'c_s', 'vp_t', 'c_t', 'cp_t', 'cp_c', 
+        'cn_t', 'cn_c', 'ct_t', 't_s', 'dc_t', 'dc_c']
 
 class BulletPointLangVars(PunktLanguageVars):
     sent_end_chars = ('.', '?', '!', '•', '...')
@@ -58,23 +62,36 @@ def create_df_from_texts(filename):
     :returns: Pandas dataframe with shape (n_texts, n_features)
     """
 
-
     features_df = pd.DataFrame()
     texts = pd.read_csv(filename)
 
-    pool = Pool(processes=4)
+    #pool = Pool(processes=1) # parallelizing only works if dependency parsing results are not written in a file
     zip_loc = zip(texts.text, texts.toeic, texts.student)
+    failures = []
 
     features_list = []
     for counter, (raw_text, toeic_score, text_id) in enumerate(tqdm.tqdm(zip_loc)):
-        arguments = raw_text, str(toeic_score), str(text_id), 'learners'
+        if counter%100 == 0:
+            print(counter)
         if counter not in _TEXTS_TO_EXCLUDE:
-            features_list.append(pool.apply_async(process_one_text, (arguments,)))
+            try:
+                arguments = raw_text, str(toeic_score), str(text_id), 'learners'
+                rt = SingleTextProcessor(*arguments)
+                if len(rt.sentences) > 2:
+                    rt.process_self()
+                    l2_dict = rt.to_dict()
+                    features = engineer_features(l2_dict)
+                    features_df = features_df.append(features, ignore_index=True)
+            except:
+                print('Failure for counter ' + str(counter))
+                failures.append(counter)
+                   #features_list.append(process_one_text(arguments))
+            #features_list.append(pool.apply_async(process_one_text, (arguments,)))
     
-    for features in tqdm.tqdm(features_list):
-        features_df = features_df.append(features.get(), ignore_index=True)
-        
-    return features_df
+    # for features in tqdm.tqdm(features_list):
+        # features_df = features_df.append(features.get(), ignore_index=True)
+
+    return features_df, failures
 
 
 def engineer_features(l2_dict):
@@ -111,15 +128,14 @@ def engineer_features(l2_dict):
     features['n_unique_modals'] = get_n_unique_modals(l2_dict)
     features['n_wh'] = get_n_wh(l2_dict)
 
+    for key in KEYS:
+        features[key] = l2_dict[key]
+
     return pd.DataFrame(features, index=[0])    
 
 if __name__ == "__main__":
 
-    #processed_directory = processed_data_dir
-    processed_directory = '../../data/processed/'
-    subtitle_directory = Path('/Users/aglushko/Desktop/insight_fellows/insight-project/corpora/movies/SubIMDB_All_Individual/subtitles/')
-    file = 'gachon_processed.csv'
-    filename = os.path.join(processed_directory, file)
-
-    features = get_movie_subtitles('0314331',subtitle_directory)
-    print(features)
+    input_filename = os.path.join(processed_data_dir, '01_gachon_processed.csv')
+    features_df, failures = create_df_from_texts(input_filename)
+    output_filename = os.path.join(processed_data_dir, 'gachon_features.csv')
+    features_df.to_csv('gachon_features.csv', index = False)

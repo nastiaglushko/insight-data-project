@@ -7,7 +7,7 @@ import numpy as np
 import nltk
 from nltk import bigrams
 from nltk.corpus import brown
-# from nltk.parse import CoreNLPParser
+from nltk.parse import CoreNLPParser
 from nltk.probability import FreqDist
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import RegexpTokenizer
@@ -17,12 +17,12 @@ from nltk.tokenize.punkt import PunktLanguageVars
 from movielingo.text_utils import get_corrected_word
 from movielingo.text_utils import get_pos_tags
 from movielingo.text_utils import tokenize_words
-# from movielingo.parser_patterns import get_patternlist
+from movielingo.parser_patterns import get_patternlist
 
-# def division(x,y):
-#     if float(x)==0 or float(y)==0:
-#         return 0
-#     return float(x)/float(y)
+def division(x,y):
+    if float(x)==0 or float(y)==0:
+        return 0
+    return float(x)/float(y)
 
 class BulletPointLangVars(PunktLanguageVars):
     sent_end_chars = ('.', '?', '!', '•', '\n')
@@ -30,9 +30,9 @@ class BulletPointLangVars(PunktLanguageVars):
 BROWN_BIGRAMS = FreqDist(bigrams(brown.words(categories = ['reviews'])))
 TOKENIZER = RegexpTokenizer(r'\w+')
 SENT_TOKENIZER = PunktSentenceTokenizer(lang_vars = BulletPointLangVars())
-# TREGEX = "../../tregex"
-# TEMP = "./"
-# PARSER = CoreNLPParser()
+TREGEX = "../../tregex"
+TEMP = "./"
+PARSER = CoreNLPParser()
 
 class SingleTextProcessor(object):
 
@@ -44,6 +44,7 @@ class SingleTextProcessor(object):
         self.toeic_score = toeic_score
         self.text_id = text_id
         self.mode = mode
+        self.sentences = sent_tokenize(self.raw_text)
 
 
     def find_mean_bigram_freq(self):
@@ -89,45 +90,45 @@ class SingleTextProcessor(object):
         self.median_sent_len = np.median(sent_lengths)
         self.sd_sent_len = np.std(sent_lengths)
 
-    # def get_parser_metrics(self):
+    def get_parser_metrics(self):
 
-    #     patternlist = get_patternlist()
+        patternlist = get_patternlist()
 
-    #     new_lines = [x + '\n' for x in sent_tokenize(self.raw_text)]
-    #     formatted_text = ' '.join(new_lines)
+        new_lines = [x + '\n' for x in sent_tokenize(self.raw_text)]
+        formatted_text = ' '.join(new_lines)
 
-    #     parsed = PARSER.parse_text(formatted_text)
-    #     f = open("temp.parsed", "w")
-    #     for elem in parsed:
-    #         f.write(str(elem))
-    #     f.close()
+        parsed = PARSER.parse_text(formatted_text)
+        f = open("temp.parsed", "w")
+        for elem in parsed:
+            f.write(str(elem))
+        f.close()
 
-    #     patterncount = []
-    #     for pattern in patternlist:
-    #         command = TREGEX + "/tregex.sh "  + pattern + " " + TEMP+ "/temp.parsed -C -o"  
-    #         direct_output = subprocess.check_output(command, shell=True)
-    #         count = direct_output.decode('utf-8')[:-1]
-    #         patterncount.append(count)
-    #     patterncount[7]=patterncount[-4]+patterncount[-5]+patterncount[-6]
-    #     patterncount[2]=patterncount[2]+patterncount[-3]
-    #     patterncount[3]=patterncount[3]+patterncount[-2]
-    #     patterncount[1]=patterncount[1]+patterncount[-1]
-    #     w = self.n_words
-    #     [s,vp,c,t,dc,ct,cp,cn]=patterncount[:8]
-    #     self.mls=division(w,s)
-    #     self.mlt=division(w,t)
-    #     self.mlc=division(w,c)
-    #     self.c_s=division(c,s)
-    #     self.vp_t=division(vp,t)
-    #     self.c_t=division(c,t)
-    #     self.dc_c=division(dc,c)
-    #     self.dc_t=division(dc,t)
-    #     self.t_s=division(t,s)
-    #     self.ct_t=division(ct,t)
-    #     self.cp_t=division(cp,t)
-    #     self.cp_c=division(cp,c)
-    #     self.cn_t=division(cn,t)
-    #     self.cn_c=division(cn,c)
+        patterncount = []
+        for pattern in patternlist:
+            command = TREGEX + "/tregex.sh "  + pattern + " " + TEMP+ "/temp.parsed -C -o"  
+            direct_output = subprocess.check_output(command, shell=True)
+            count = direct_output.decode('utf-8')[:-1]
+            patterncount.append(count)
+        patterncount[7]=patterncount[-4]+patterncount[-5]+patterncount[-6]
+        patterncount[2]=patterncount[2]+patterncount[-3]
+        patterncount[3]=patterncount[3]+patterncount[-2]
+        patterncount[1]=patterncount[1]+patterncount[-1]
+        w = self.n_words
+        [s,vp,c,t,dc,ct,cp,cn]=patterncount[:8]
+        self.mls=division(w,s)
+        self.mlt=division(w,t)
+        self.mlc=division(w,c)
+        self.c_s=division(c,s)
+        self.vp_t=division(vp,t)
+        self.c_t=division(c,t)
+        self.dc_c=division(dc,c)
+        self.dc_t=division(dc,t)
+        self.t_s=division(t,s)
+        self.ct_t=division(ct,t)
+        self.cp_t=division(cp,t)
+        self.cp_c=division(cp,c)
+        self.cn_t=division(cn,t)
+        self.cn_c=division(cn,c)
 
     def process_self(self):
         words_uncorrected = tokenize_words(self.raw_text)
@@ -141,7 +142,7 @@ class SingleTextProcessor(object):
 
         self.find_mean_bigram_freq()
         self.get_sentences_info()
-        #self.get_parser_metrics()
+        self.get_parser_metrics()
 
     def to_dict(self):
         local_dict = {}
@@ -156,20 +157,20 @@ class SingleTextProcessor(object):
         local_dict['n_finite_verbs'] =   self.n_finite_verbs
         local_dict['L2_proficiency'] = self.toeic_score
         local_dict['text_id'] =  self.text_id
-        # local_dict['mls'] = self.mls
-        # local_dict['mlt'] = self.mlt
-        # local_dict['mlc'] = self.mlc
-        # local_dict['c_s'] = self.c_s
-        # local_dict['vp_t'] = self.vp_t
-        # local_dict['c_t'] = self.c_t
-        # local_dict['cp_t'] = self.cp_t
-        # local_dict['cp_c'] = self.cp_c
-        # local_dict['cn_t'] = self.cn_t
-        # local_dict['cn_c'] = self.cn_c
-        # local_dict['ct_t'] = self.ct_t
-        # local_dict['t_s'] = self.t_s
-        # local_dict['dc_t'] = self.dc_t
-        # local_dict['dc_c'] = self.dc_c
+        local_dict['mls'] = self.mls
+        local_dict['mlt'] = self.mlt
+        local_dict['mlc'] = self.mlc
+        local_dict['c_s'] = self.c_s
+        local_dict['vp_t'] = self.vp_t
+        local_dict['c_t'] = self.c_t
+        local_dict['cp_t'] = self.cp_t
+        local_dict['cp_c'] = self.cp_c
+        local_dict['cn_t'] = self.cn_t
+        local_dict['cn_c'] = self.cn_c
+        local_dict['ct_t'] = self.ct_t
+        local_dict['t_s'] = self.t_s
+        local_dict['dc_t'] = self.dc_t
+        local_dict['dc_c'] = self.dc_c
         return(local_dict)
 
 if __name__ == "__main__":

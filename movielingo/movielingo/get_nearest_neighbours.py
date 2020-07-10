@@ -1,16 +1,14 @@
-import json
 import numpy as np
 import os
 import pandas as pd
 import re
-import time
-import tqdm
 
 from requests import get
 from bs4 import BeautifulSoup
 
 from movielingo.movie import Movie
-from movielingo.config import subtitle_dir, model_dir, processed_data_dir
+from movielingo.config import subtitle_dir, model_dir
+from movielingo.scrape_movie_details import scrape_movie_details
 
 from sklearn.neighbors import NearestNeighbors
 import pickle
@@ -55,47 +53,6 @@ def get_top_movies_with_subtitles(top_ids, top_titles, subtitle_ids):
 	good_titles_with_subtitles = [t for ID, t in zip(top_ids, top_titles) if ID in subtitle_ids]
 	return good_ids_with_subtitles, good_titles_with_subtitles
 
-def get_movie_characteristics(imdb_id):
-	''' Get movie characteristics from IMDB
-	:param: IMDB ID
-	:returns: movie details as strings
-	'''
-	url = 'https://www.imdb.com/title/tt' + imdb_id + '/'
-	response = get(url)
-	html_soup = BeautifulSoup(response.text, 'html.parser')
-	title = html_soup.title.text
-	description = html_soup.find('script', type="application/ld+json").contents[0]
-	description = json.loads(description)
-	genre = description['genre']
-	movie_or_tv = description['@type']
-	keywords = description['keywords']
-	if type(keywords) == list:
-	    keywords = ','.join(keywords)
-	if type(genre) == list:
-	    genre = ','.join(genre)
-	rating = description['aggregateRating']['ratingValue']
-	return title, genre, movie_or_tv, keywords, rating
-
-def scrape_movie_details(imdb_ids_list, filename):
-	''' Write movie characteristics into a text file
-	:param: list of IMDB ids, filename
-	:returns: None (writes to file)
-	'''
-	for imdb_id in tqdm.tqdm(ids_in_db):
-		try:
-			title, genre, movie_or_tv, keywords, rating = get_movie_characteristics(imdb_id)
-			time.sleep(5)
-			with open(filename, 'a') as movie_characteristics_file:
-			    movie_characteristics_file.write(imdb_id + '\t' + 
-			                              title + '\t' + 
-			                              genre + '\t' +
-			                              movie_or_tv + '\t' +
-			                              keywords + '\t' +
-			                              rating +
-			                              '\n')
-		except:
-			pass
-
 def extract_features_from_subtitles(imdb_ids, titles):
 	''' Extract features from subtitles
 	:param: list of ids present in the subtitle database
@@ -136,4 +93,6 @@ if __name__ == '__main__':
 	y = df_summary.index
 	X = df_summary.values
 	save_NN_fits(X, model_dir)
+	filename = processed_data_dir / 'top250_movie_characteristics.txt'
+	scrape_movie_details(ids, filename)
 

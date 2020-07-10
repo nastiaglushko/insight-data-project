@@ -1,12 +1,13 @@
-from bs4 import BeautifulSoup
 import os
 import pandas as pd
 import re
 import requests
 import tqdm
 
+from bs4 import BeautifulSoup
 from collections import Counter
-from movielingo.config import subtitle_dir, processed_data_dir
+import pickle
+from movielingo.config import subtitle_dir, processed_data_dir, model_dir
 from movielingo.batch_text_processing_multi import process_one_text
 from multiprocessing import Pool
 from nltk.tokenize.punkt import PunktSentenceTokenizer
@@ -155,7 +156,7 @@ class Movie():
         self.genre = features_db_rec.genre
         self.get_link_to_movie_poster()
 
-    def show_difficulty(subtitle_dir, model_dir, model = 'regression'):
+    def show_difficulty(self, model = 'regression'):
         ''' Predict a language proficiency label for every 5 sentences in a movie to infer
         text difficulty for language learners
         :param: movie_title (title of the movie, str), subtitle_dir (directory with subtitle
@@ -167,8 +168,9 @@ class Movie():
         loaded_model_name = model_dir / 'movielingo_model.sav'
         loaded_model = pickle.load(open(loaded_model_name, 'rb'))
         text_preds = []
-        for text_id in self.subtitle_features.text_id.unique():
-            text_slice = self.subtitle_features[self.subtitle_features.text_id == text_id]
+        features = self.subtitle_features
+        for text_id in features.text_id.unique():
+            text_slice = features[features.text_id == text_id]
             text_slice = text_slice.drop(columns = ['text_id','L2_proficiency']).reset_index(drop=True)
             text_pred = loaded_model.predict(text_slice)
             text_preds.append(text_pred)

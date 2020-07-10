@@ -8,8 +8,11 @@ STANFORD = "../../stanford-corenlp-4.0.0"
 # Create the server
 server = CoreNLPServer(
    os.path.join(STANFORD, "stanford-corenlp-4.0.0.jar"),
-   os.path.join(STANFORD, "stanford-corenlp-4.0.0-models.jar"),    
+   os.path.join(STANFORD, "stanford-corenlp-4.0.0-models.jar"),
+   port = 9000 
 )
 
 # Start the server in the background
+print(server.url)
 server.start()
+
