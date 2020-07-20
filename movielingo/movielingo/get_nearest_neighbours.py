@@ -7,7 +7,7 @@ from requests import get
 from bs4 import BeautifulSoup
 
 from movielingo.movie import Movie
-from movielingo.config import subtitle_dir, model_dir
+from movielingo.config import subtitle_dir, model_dir, processed_data_dir
 from movielingo.scrape_movie_details import scrape_movie_details
 
 from sklearn.neighbors import NearestNeighbors
@@ -55,7 +55,7 @@ def get_top_movies_with_subtitles(top_ids, top_titles, subtitle_ids):
 
 def extract_features_from_subtitles(imdb_ids, titles):
 	''' Extract features from subtitles
-	:param: list of ids present in the subtitle database
+	:param: list of ids present in the subtitle database, titles of these movies
 	:returns: pandas df (feature extracted for every 5 sentences), df_summary (one line per movie)
 	'''
 	for movie in range(len(imdb_ids)):
@@ -66,10 +66,13 @@ def extract_features_from_subtitles(imdb_ids, titles):
 		df_movie['title'] = titles[movie]
 		if movie == 0:
 			df = df_movie
+			df.to_csv(processed_data_dir / 'movie_features_temp.csv', index=False)
 		else:
 			df = df.append(df_movie, ignore_index = True)
+			df.to_csv(processed_data_dir / 'movie_features_temp.csv', index=False)
 	df_summary = df.groupby('title').mean()
 	df_summary.to_csv(processed_data_dir / 'movie_features.csv', index=False)
+	print(df_summary)
 	return df, df_summary
 
 def save_NN_fits(samples, directory):
@@ -89,10 +92,11 @@ if __name__ == '__main__':
 	top_ids, top_titles = read_imdb_list(soup)
 	subtitle_ids = get_available_subtitles(subtitle_dir)
 	ids, titles = get_top_movies_with_subtitles(top_ids, top_titles, subtitle_ids)
-	df, df_summary = extract_features_from_subtitles(ids, titles)
+	df, df_summary = extract_features_from_subtitles(ids[-1], titles[-1])
+	df_summary.to_csv('movie_features.csv', index=False)
 	y = df_summary.index
 	X = df_summary.values
 	save_NN_fits(X, model_dir)
-	filename = processed_data_dir / 'top250_movie_characteristics.txt'
-	scrape_movie_details(ids, filename)
+	#filename = processed_data_dir / 'top250_movie_characteristics.txt'
+	#scrape_movie_details(ids, filename)
 

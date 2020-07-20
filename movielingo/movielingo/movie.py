@@ -7,9 +7,10 @@ import tqdm
 from bs4 import BeautifulSoup
 from collections import Counter
 import pickle
+import time
 from movielingo.config import subtitle_dir, processed_data_dir, model_dir
-from movielingo.batch_text_processing_multi import process_one_text
-from multiprocessing import Pool
+from movielingo.batch_text_processing_multi import process_one_text, engineer_features
+from movielingo.single_text_processor import SingleTextProcessor
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktLanguageVars
 from nltk.tokenize.treebank import TreebankWordDetokenizer
@@ -123,7 +124,6 @@ class Movie():
         :returns: Pandas dataframe with shape (n_words, n_features)
         """
         features_list = []
-        pool = Pool(processes=4)
         features_df = pd.DataFrame()
         files = os.listdir(subtitle_dir)
         list_of_text_files = []
@@ -136,14 +136,18 @@ class Movie():
             with open(filename, 'r') as subtitles:
                 texts = subtitles.read()
             sents = SENT_TOKENIZER.tokenize(texts)
-            for itext in range(0, len(sents), 5):
+            for itext in range(0, len(sents)-2, 20): # last 2 are noise
                 text_window = sents[itext:(itext+5)]
                 text_window_raw = TreebankWordDetokenizer().detokenize(text_window)
-                arguments = text_window_raw,  str('_'), 'tw'+ str(episode) + str(itext), 'movie'
-                features_list.append(pool.apply_async(process_one_text, (arguments,)))
-        for features in tqdm.tqdm(features_list):
-            features_df = features_df.append(features.get(), ignore_index=True)
+                arguments = text_window_raw,  str('_'), 'episode'+ str(episode) + '_tw' + str(itext), 'movie'
+                rt = SingleTextProcessor(*arguments)
+                if len(rt.sentences) > 2:
+                    rt.process_self()
+                    feature_dict = rt.to_dict()
+                    features = engineer_features(feature_dict)
+                    features_df = features_df.append(features, ignore_index=True)
         self.subtitle_features = features_df
+        print(features_df)
 
     def update_from_db(self, features_db_rec):
         ''' Update recommendation characteristics
@@ -187,3 +191,7 @@ class Movie():
 
 if __name__ == '__main__':
     movie = Movie('Casablanca')
+    movie.imdb_id = '0034583'
+    print(movie.imdb_id)
+    movie.create_subtitle_features_df(subtitle_dir)
+    print(movie.subtitle_features)

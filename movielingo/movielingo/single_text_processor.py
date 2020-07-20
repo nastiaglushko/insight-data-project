@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import time
 sys.path.append("../movielingo/")
 
 import numpy as np
@@ -8,6 +9,7 @@ import nltk
 from nltk import bigrams
 from nltk.corpus import brown
 from nltk.parse import CoreNLPParser
+from nltk.parse.corenlp import CoreNLPServer
 from nltk.probability import FreqDist
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import RegexpTokenizer
@@ -25,13 +27,19 @@ def division(x,y):
     return float(x)/float(y)
 
 class BulletPointLangVars(PunktLanguageVars):
-    sent_end_chars = ('.', '?', '!', '•', '\n')
+    sent_end_chars = ('.', '?', '!', '•', '...')
 
 BROWN_BIGRAMS = FreqDist(bigrams(brown.words(categories = ['reviews'])))
 TOKENIZER = RegexpTokenizer(r'\w+')
 SENT_TOKENIZER = PunktSentenceTokenizer(lang_vars = BulletPointLangVars())
 TREGEX = "../../tregex"
 TEMP = "./"
+STANFORD = "../../stanford-corenlp-4.0.0"
+SERVER = CoreNLPServer(
+   os.path.join(STANFORD, "stanford-corenlp-4.0.0.jar"),
+   os.path.join(STANFORD, "stanford-corenlp-4.0.0-models.jar"),
+   port = 9000 
+)
 PARSER = CoreNLPParser()
 
 class SingleTextProcessor(object):
@@ -40,7 +48,7 @@ class SingleTextProcessor(object):
 
     def __init__(self, text_string, toeic_score, text_id, mode):
 
-        self.raw_text = text_string
+        self.raw_text = text_string.replace('\n', ' ')
         self.toeic_score = toeic_score
         self.text_id = text_id
         self.mode = mode
@@ -91,30 +99,56 @@ class SingleTextProcessor(object):
         self.sd_sent_len = np.std(sent_lengths)
 
     def get_parser_metrics(self):
-
-        patternlist = get_patternlist()
-
-        new_lines = [x + '\n' for x in sent_tokenize(self.raw_text)]
-        formatted_text = ' '.join(new_lines)
-
-        parsed = PARSER.parse_text(formatted_text)
-        f = open("temp.parsed", "w")
-        for elem in parsed:
-            f.write(str(elem))
-        f.close()
-
-        patterncount = []
-        for pattern in patternlist:
-            command = TREGEX + "/tregex.sh "  + pattern + " " + TEMP+ "/temp.parsed -C -o"  
-            direct_output = subprocess.check_output(command, shell=True)
-            count = direct_output.decode('utf-8')[:-1]
-            patterncount.append(count)
-        patterncount[7]=patterncount[-4]+patterncount[-5]+patterncount[-6]
-        patterncount[2]=patterncount[2]+patterncount[-3]
-        patterncount[3]=patterncount[3]+patterncount[-2]
-        patterncount[1]=patterncount[1]+patterncount[-1]
-        w = self.n_words
-        [s,vp,c,t,dc,ct,cp,cn]=patterncount[:8]
+        server_started = False
+        for i in range(30):
+            try:
+                SERVER.start()
+                server_started = True
+                break
+            except:
+                time.sleep(1)
+        if server_started:
+            patternlist = get_patternlist()
+            if self.mode == 'movie':
+                new_lines = [x + '\n' for x in SENT_TOKENIZER.tokenize(self.raw_text)]
+            else:
+                new_lines = [x + '\n' for x in sent_tokenize(self.raw_text)]
+            formatted_text = ' '.join(new_lines)
+            parsed = PARSER.parse_text(formatted_text)
+            print(parsed)
+            f = open("temp.parsed", "w")
+            for i in range(30):
+                try:
+                    for elem in parsed:
+                        f.write(str(elem))
+                except:
+                    time.sleep(2)
+                    print('Troubleshooting...')
+                else:
+                    break
+            f.close()
+            print('Finished writing "temp.parsed" file')
+            patterncount = []
+            for pattern in patternlist:
+                command = TREGEX + "/tregex.sh "  + pattern + " " + TEMP+ "/temp.parsed -C -o"  
+                direct_output = subprocess.check_output(command, shell=True)
+                count = direct_output.decode('utf-8')[:-1]
+                patterncount.append(count)
+            patterncount[7]=patterncount[-4]+patterncount[-5]+patterncount[-6]
+            patterncount[2]=patterncount[2]+patterncount[-3]
+            patterncount[3]=patterncount[3]+patterncount[-2]
+            patterncount[1]=patterncount[1]+patterncount[-1]
+            w = self.n_words
+            [s,vp,c,t,dc,ct,cp,cn]=patterncount[:8]
+        else:
+            [s,vp,c,t,dc,ct,cp,cn] = [np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan]
+        print('Patterncount:', patterncount)
+        for i in range(30):
+            try:
+                SERVER.stop()
+                break
+            except:
+                time.sleep(1)
         self.mls=division(w,s)
         self.mlt=division(w,t)
         self.mlc=division(w,c)
@@ -129,6 +163,7 @@ class SingleTextProcessor(object):
         self.cp_c=division(cp,c)
         self.cn_t=division(cn,t)
         self.cn_c=division(cn,c)
+        time.sleep(1)
 
     def process_self(self):
         words_uncorrected = tokenize_words(self.raw_text)
