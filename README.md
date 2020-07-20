@@ -38,7 +38,22 @@ Here is how I built Movielingo.
 
 What are the features of text that are difficult for English learners? And which of these are likely to affect our understanding of a movie?
 
-I analyzed [essays from > 1300 English learners](http://koreanlearnercorpusblog.blogspot.com/p/corpus.html). I cleaned the text and extracted basic NLP features from it using nltk. Then I engineered features of lexical and syntactic complexity: word frequencies, word length, sentence length, as well as metrics of syntactic complexity derived using the Stanford CoreNLP parser.
+I analyzed [essays from > 1300 English learners](http://koreanlearnercorpusblog.blogspot.com/p/corpus.html). I cleaned the text and extracted basic NLP features from it using nltk. Then I engineered features of lexical and syntactic complexity: word frequencies, word length, sentence length, as well as metrics of syntactic complexity derived using the Stanford CoreNLP parser. In terms of dependency parsing features, I reimplemented syntactic text characteristics extraction discussed in a widely cited paper on syntactic complexity in second language learning ([Lu, X., 2010](https://www.jbe-platform.com/content/journals/10.1075/ijcl.15.4.02lu)):
+
+* Mean length of sentence (mls)
+* Mean length of T-unit (mlt)
+* Mean length of clause (mlc)
+* Sentence complexity ratio (c_s)
+* Verb phrases per T-unit (vp_t)
+* T-unit complexity ratio (c_t)
+* Dependent clause ratio (dc_c)
+* Dependent clauses per T-unit (dc_t)
+* Sentence coordination ratio (t_s)
+* Complex T-unit ratio (ct_t)
+* Coordinate phrases per T-unit (cp_t)
+* Coordinate phrases per clause (cp_c)
+* Complex nominals per T-unit (cn_t)
+* Complex nominals per clause (cn_c)
 
 ![alt text](./img/essays.png)
 
