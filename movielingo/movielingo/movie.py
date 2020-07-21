@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import pandas as pd
 import re
@@ -130,14 +131,19 @@ class Movie():
         for file in files:
             if re.search(self.imdb_id, file):
                 list_of_text_files.append(file)
-        
+        sent_n = 0
+        sent_per_episode = int(200/len(list_of_text_files))
         for episode, file in enumerate(list_of_text_files):
             filename = subtitle_dir / file
             with open(filename, 'r') as subtitles:
                 texts = subtitles.read()
-            sents = SENT_TOKENIZER.tokenize(texts)
-            for itext in range(0, len(sents)-2, 20): # last 2 are noise
-                text_window = sents[itext:(itext+5)]
+            subtitles.close()
+            sents_all = SENT_TOKENIZER.tokenize(texts)
+            sents = np.random.choice(sents_all[:-2], sent_per_episode) # last 2 are noise
+            sents = sents.tolist()
+            window_size = 5
+            for itext in range(0, len(sents), window_size):
+                text_window = sents[itext:(itext+window_size)]
                 text_window_raw = TreebankWordDetokenizer().detokenize(text_window)
                 arguments = text_window_raw,  str('_'), 'episode'+ str(episode) + '_tw' + str(itext), 'movie'
                 rt = SingleTextProcessor(*arguments)
@@ -146,8 +152,11 @@ class Movie():
                     feature_dict = rt.to_dict()
                     features = engineer_features(feature_dict)
                     features_df = features_df.append(features, ignore_index=True)
+                    sent_n += window_size
+                    print('----------\n\n------ PROCESSING SENTENCE',
+                        sent_n, 'in episode', episode+1, 'out of',
+                        len(list_of_text_files)+1, '------\n\n----------')
         self.subtitle_features = features_df
-        print(features_df)
 
     def update_from_db(self, features_db_rec):
         ''' Update recommendation characteristics

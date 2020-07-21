@@ -22,9 +22,12 @@ from movielingo.text_utils import tokenize_words
 from movielingo.parser_patterns import get_patternlist
 
 def division(x,y):
-    if float(x)==0 or float(y)==0:
+    if x == np.nan or y == np.nan:
+        return np.nan
+    elif float(x)==0 or float(y)==0:
         return 0
-    return float(x)/float(y)
+    else:
+        return float(x)/float(y)
 
 class BulletPointLangVars(PunktLanguageVars):
     sent_end_chars = ('.', '?', '!', '•', '...')
@@ -38,7 +41,7 @@ STANFORD = "../../stanford-corenlp-4.0.0"
 SERVER = CoreNLPServer(
    os.path.join(STANFORD, "stanford-corenlp-4.0.0.jar"),
    os.path.join(STANFORD, "stanford-corenlp-4.0.0-models.jar"),
-   port = 9000 
+   port = 9000, java_options = '-Xmx4g -Xms1g'
 )
 PARSER = CoreNLPParser()
 
@@ -139,16 +142,13 @@ class SingleTextProcessor(object):
             patterncount[3]=patterncount[3]+patterncount[-2]
             patterncount[1]=patterncount[1]+patterncount[-1]
             w = self.n_words
+            print('Number of words:', w)
             [s,vp,c,t,dc,ct,cp,cn]=patterncount[:8]
+            SERVER.stop()
         else:
+            print('Server did not start!!!')
             [s,vp,c,t,dc,ct,cp,cn] = [np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan]
         print('Patterncount:', patterncount)
-        for i in range(30):
-            try:
-                SERVER.stop()
-                break
-            except:
-                time.sleep(1)
         self.mls=division(w,s)
         self.mlt=division(w,t)
         self.mlc=division(w,c)
@@ -163,7 +163,6 @@ class SingleTextProcessor(object):
         self.cp_c=division(cp,c)
         self.cn_t=division(cn,t)
         self.cn_c=division(cn,c)
-        time.sleep(1)
 
     def process_self(self):
         words_uncorrected = tokenize_words(self.raw_text)
