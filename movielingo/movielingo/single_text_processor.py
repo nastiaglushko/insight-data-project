@@ -142,7 +142,7 @@ class SingleTextProcessor(object):
             patterncount[3]=patterncount[3]+patterncount[-2]
             patterncount[1]=patterncount[1]+patterncount[-1]
             w = self.n_words
-            print('Number of words:', w)
+            print('\n\n\n ----- Number of words:', w, '\n\n\n-------')
             [s,vp,c,t,dc,ct,cp,cn]=patterncount[:8]
             SERVER.stop()
         else:

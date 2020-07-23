@@ -30,7 +30,7 @@ def toeic2cefr(x):
         return 'B2+'
         
 class BulletPointLangVars(PunktLanguageVars):
-    sent_end_chars = ('.', '?', '!', '•', '...')
+    sent_end_chars = ('.', '?', '!', '•', '...', '|')
 
 SENT_TOKENIZER = PunktSentenceTokenizer(lang_vars = BulletPointLangVars())
 TEMPLATE_POSTER_URL = 'https://s.studiobinder.com/wp-content/uploads/2017/12/Movie-Poster-Template-Light-With-Image.jpg?x81279'
@@ -132,30 +132,30 @@ class Movie():
             if re.search(self.imdb_id, file):
                 list_of_text_files.append(file)
         sent_n = 0
-        sent_per_episode = int(200/len(list_of_text_files))
+        sent_per_episode = int(50/len(list_of_text_files))
         for episode, file in enumerate(list_of_text_files):
             filename = subtitle_dir / file
             with open(filename, 'r') as subtitles:
                 texts = subtitles.read()
             subtitles.close()
             sents_all = SENT_TOKENIZER.tokenize(texts)
-            sents = np.random.choice(sents_all[:-2], sent_per_episode) # last 2 are noise
-            sents = sents.tolist()
-            window_size = 5
-            for itext in range(0, len(sents), window_size):
-                text_window = sents[itext:(itext+window_size)]
-                text_window_raw = TreebankWordDetokenizer().detokenize(text_window)
-                arguments = text_window_raw,  str('_'), 'episode'+ str(episode) + '_tw' + str(itext), 'movie'
-                rt = SingleTextProcessor(*arguments)
-                if len(rt.sentences) > 2:
-                    rt.process_self()
-                    feature_dict = rt.to_dict()
-                    features = engineer_features(feature_dict)
-                    features_df = features_df.append(features, ignore_index=True)
-                    sent_n += window_size
-                    print('----------\n\n------ PROCESSING SENTENCE',
-                        sent_n, 'in episode', episode+1, 'out of',
-                        len(list_of_text_files)+1, '------\n\n----------')
+            window_size = 3
+            if type(sents_all[:-2]) == list and len(sents_all[:-2]) >= sent_per_episode:
+                sents = np.random.choice(sents_all[:-2], sent_per_episode) # last 2 are noise
+                for itext in range(0, len(sents), window_size):
+                    text_window = sents[itext:(itext+window_size)]
+                    text_window_raw = TreebankWordDetokenizer().detokenize(text_window)
+                    arguments = text_window_raw,  str('_'), 'episode'+ str(episode) + '_tw' + str(itext), 'movie'
+                    rt = SingleTextProcessor(*arguments)
+                    if len(rt.sentences) > 2:
+                        rt.process_self()
+                        feature_dict = rt.to_dict()
+                        features = engineer_features(feature_dict)
+                        features_df = features_df.append(features, ignore_index=True)
+                        sent_n += window_size
+                        print('----------\n\n------ PROCESSING SENTENCE',
+                            sent_n, 'in episode', episode+1, 'out of',
+                            len(list_of_text_files)+1, '------\n\n----------')
         self.subtitle_features = features_df
 
     def update_from_db(self, features_db_rec):

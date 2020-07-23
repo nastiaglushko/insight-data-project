@@ -14,6 +14,14 @@ from nltk.stem.wordnet import WordNetLemmatizer
 #from spellchecker import SpellChecker
 from spellchecker import SpellChecker
 
+def division(x,y):
+    if x == np.nan or y == np.nan:
+        return np.nan
+    elif float(x)==0 or float(y)==0:
+        return 0
+    else:
+        return float(x)/float(y)
+
 LEM = WordNetLemmatizer()
 FREQS_LEMMAS = FreqDist([LEM.lemmatize(w.lower()) 
                          for w in brown.words()]) # can have errors in lemmas <= wrong postag
@@ -89,12 +97,12 @@ def tokenize_words(text_string):
 def get_rare_lemma_frequency(text_dict):
     n_unique_lemmas_abs = len(Counter(text_dict["lemma"]).keys())
     n_unique_rare_lemmas = len(Counter([i == 0 for i in text_dict["lemma"]]).keys())
-    return n_unique_rare_lemmas / n_unique_lemmas_abs
+    return division(n_unique_rare_lemmas, n_unique_lemmas_abs)
 
 def get_n_unique_lemmas(text_dict):
     text_length = len(text_dict)
     n_unique_lemmas_abs = len(Counter(text_dict["lemma"]).keys())
-    n_unique_lemmas = n_unique_lemmas_abs / text_length
+    n_unique_lemmas = division(n_unique_lemmas_abs, text_length)
     return n_unique_lemmas
     
 def get_n_unique_verb_forms(text_dict):
@@ -107,7 +115,7 @@ def get_n_unique_verb_forms(text_dict):
         if unipos.startswith('V'):
             n_uniq_verb_forms_abs += 1
 
-    n_uniq_verb_forms = n_uniq_verb_forms_abs / text_length
+    n_uniq_verb_forms = division(n_uniq_verb_forms_abs, text_length)
     return n_uniq_verb_forms
 
 def get_n_unique_past_verbs(text_dict):
@@ -120,7 +128,7 @@ def get_n_unique_past_verbs(text_dict):
             past_verbs_abs.append(tok)
 
     n_unique_past_verbs_abs = len(Counter(past_verbs_abs).keys())
-    n_unique_past_verbs = n_unique_past_verbs_abs / text_length
+    n_unique_past_verbs = division(n_unique_past_verbs_abs, text_length)
     return n_unique_past_verbs
 
 def get_n_unique_adjectives(text_dict):
@@ -132,7 +140,7 @@ def get_n_unique_adjectives(text_dict):
             adj_abs.append(tok)
 
     n_unique_adj_abs = len(Counter(adj_abs).keys())
-    n_unique_adj = n_unique_adj_abs / text_length
+    n_unique_adj = division(n_unique_adj_abs, text_length)
     return n_unique_adj
 
 def get_n_unique_adverbs(text_dict):
@@ -144,7 +152,7 @@ def get_n_unique_adverbs(text_dict):
             adv_abs.append(tok)
 
     n_unique_adv_abs = len(Counter(adv_abs).keys())
-    n_unique_adv = n_unique_adv_abs / text_length
+    n_unique_adv = division(n_unique_adv_abs, text_length)
 
     return n_unique_adv
 

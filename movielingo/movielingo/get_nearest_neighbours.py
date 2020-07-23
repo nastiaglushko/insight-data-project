@@ -61,18 +61,17 @@ def extract_features_from_subtitles(imdb_ids, titles):
 	for movie in range(len(imdb_ids)):
 		one_movie = Movie()
 		one_movie.imdb_id = imdb_ids[movie]
+		print(titles[movie])
 		one_movie.create_subtitle_features_df(subtitle_dir)
 		df_movie = one_movie.subtitle_features
 		df_movie['title'] = titles[movie]
 		if movie == 0:
 			df = df_movie
-			df.to_csv(processed_data_dir / 'movie_features_temp.csv', index=False)
 		else:
 			df = df.append(df_movie, ignore_index = True)
-			df.to_csv(processed_data_dir / 'movie_features_temp.csv', index=False)
+	print(df)
 	df_summary = df.groupby('title').mean()
-	df_summary.to_csv(processed_data_dir / 'movie_features.csv', index=False)
-	print(df_summary)
+	df_summary.to_csv(processed_data_dir / 'movie_features.csv', index=True)
 	return df, df_summary
 
 def save_NN_fits(samples, directory):
@@ -92,7 +91,7 @@ if __name__ == '__main__':
 	top_ids, top_titles = read_imdb_list(soup)
 	subtitle_ids = get_available_subtitles(subtitle_dir)
 	ids, titles = get_top_movies_with_subtitles(top_ids, top_titles, subtitle_ids)
-	df, df_summary = extract_features_from_subtitles(ids[-1], titles[-1])
+	df, df_summary = extract_features_from_subtitles(ids, titles)
 	df_summary.to_csv('movie_features.csv', index=False)
 	y = df_summary.index
 	X = df_summary.values
