@@ -10,6 +10,7 @@ from movielingo.movie import Movie
 from movielingo.config import subtitle_dir, model_dir, processed_data_dir
 from movielingo.scrape_movie_details import scrape_movie_details
 
+from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 import pickle
 
@@ -93,9 +94,15 @@ if __name__ == '__main__':
 	ids, titles = get_top_movies_with_subtitles(top_ids, top_titles, subtitle_ids)
 	df, df_summary = extract_features_from_subtitles(ids, titles)
 	df_summary.to_csv('movie_features.csv', index=False)
+	# if reading from existing file:
+	# df_summary = pd.read_csv(processed_data_dir / 'movie_features.csv', index_col = 0)
 	y = df_summary.index
 	X = df_summary.values
-	save_NN_fits(X, model_dir)
+	pca6 = PCA(n_components=6)
+	pca6.fit(X)
+	pickle.dump(pca6, open('pca_model.sav', 'wb'))
+	X_projected = pca6.fit_transform(X)
+	save_NN_fits(X_projected, model_dir)
 	#filename = processed_data_dir / 'top250_movie_characteristics.txt'
 	#scrape_movie_details(ids, filename)
 
