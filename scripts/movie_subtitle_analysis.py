@@ -23,7 +23,7 @@ import re
 from requests import get
 from bs4 import BeautifulSoup
 
-from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import PCA
 import pickle
 
 from movielingo.config import subtitle_dir, model_dir, processed_data_dir
@@ -67,5 +67,9 @@ imdb.to_csv(processed_data_dir / 'imdb_title_and_id_matches.csv', index = False)
 
 y = df_summary.index
 X = df_summary.values
+pca6 = PCA(n_components=6)
+pca6.fit(X)
+X_projected = pca6.fit_transform(X)
+pickle.dump(pca6, open('pca_model.sav', 'wb'))
 save_NN_fits(X, model_dir)
 
